@@ -10,7 +10,7 @@ const generateXAuth = () => {
 	return md5(`${password}_${timestamp}`);
 };
 
-const sendRequest = async (action, params = {}) => {
+const sendRequest = async (action, params) => {
 	const xAuth = generateXAuth();
 	const config = {
 		headers: {
@@ -18,13 +18,8 @@ const sendRequest = async (action, params = {}) => {
 		},
 	};
 
-	const requestData = {
-		action,
-		params,
-	};
-
 	try {
-		const response = await axios.post(API_URL, requestData, config);
+		const response = await axios.post(API_URL, { action, params }, config);
 		return response.data.result;
 	} catch (error) {
 		console.error('Произошла ошибка при запросе к API:', error.message);
@@ -40,12 +35,25 @@ const useProducts = () => {
 	useEffect(() => {
 		const fetchData = async () => {
 			const offset = (page - 1) * 50;
-			const filterParams = { ...filter, offset, limit: 50 };
-			const filteredIds = await sendRequest('filter', filterParams);
+			let filteredIds;
+
+			if (Object.keys(filter).length === 0) {
+				filteredIds = await sendRequest('get_ids', { offset, limit: 50 });
+			} else {
+				const filterParams = { ...filter, offset, limit: 50 };
+				filteredIds = await sendRequest('filter', filterParams);
+			}
+
 			if (filteredIds) {
 				const itemsResponse = await sendRequest('get_items', { ids: filteredIds });
 				if (itemsResponse) {
-					setProducts(itemsResponse);
+					const uniqueProducts = {};
+					itemsResponse.forEach(item => {
+						if (!uniqueProducts[item.id]) {
+							uniqueProducts[item.id] = item;
+						}
+					});
+					setProducts(Object.values(uniqueProducts));
 				}
 			}
 		};
@@ -74,7 +82,7 @@ const ProductsTable = () => {
 					{products.map((product) => (
 						<tr key={product.id}>
 							<td>{product.id}</td>
-							<td>{product.name}</td>
+							<td>{product.product}</td>
 							<td>{product.price}</td>
 							<td>{product.brand}</td>
 						</tr>
@@ -83,9 +91,9 @@ const ProductsTable = () => {
 			</table>
 			<button onClick={() => setPage(page - 1)} disabled={page === 1}>Предыдущая страница</button>
 			<button onClick={() => setPage(page + 1)}>Следующая страница</button>
-			<input type="text" placeholder="Фильтр по названию" onChange={(e) => setFilter({ ...filter, name: e.target.value })} />
+			<input type="text" placeholder="Фильтр по названию" onChange={(e) => setFilter({ ...filter, product: e.target.value || undefined })} />
 			<input type="text" placeholder="Фильтр по цене" onChange={(e) => setFilter({ ...filter, price: parseFloat(e.target.value) || undefined })} />
-			<input type="text" placeholder="Фильтр по бренду" onChange={(e) => setFilter({ ...filter, brand: e.target.value })} />
+			<input type="text" placeholder="Фильтр по бренду" onChange={(e) => setFilter({ ...filter, brand: e.target.value || undefined })} />
 		</div>
 	);
 };

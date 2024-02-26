@@ -1,9 +1,13 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import ProductsTable from './ProductsTable.tsx'
+import { Provider } from 'react-redux'
+import { store } from './store/index.ts'
+import ProductsTable from './components/productsTable.tsx'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-	<React.StrictMode>
-		<ProductsTable />
-	</React.StrictMode>,
+	<Provider store={store}>
+		<React.StrictMode>
+			<ProductsTable />
+		</React.StrictMode>
+	</Provider>,
 )

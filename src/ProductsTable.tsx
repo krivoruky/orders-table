@@ -5,12 +5,25 @@ import md5 from 'md5';
 const API_URL = 'http://api.valantis.store:40000/';
 const password = 'Valantis';
 
-const generateXAuth = () => {
+type Product = {
+	id: string;
+	product: string;
+	price: number;
+	brand: string;
+};
+
+type Filter = {
+	product?: string;
+	price?: number;
+	brand?: string;
+};
+
+const generateXAuth = (): string => {
 	const timestamp = new Date().toISOString().slice(0, 10).replace(/-/g, '');
 	return md5(`${password}_${timestamp}`);
 };
 
-const sendRequest = async (action, params) => {
+const sendRequest = async (action: string, params: Record<string, any>): Promise<Product[] | null> => {
 	const xAuth = generateXAuth();
 	const config = {
 		headers: {
@@ -27,10 +40,10 @@ const sendRequest = async (action, params) => {
 	}
 };
 
-const useProducts = () => {
-	const [products, setProducts] = useState([]);
-	const [page, setPage] = useState(1);
-	const [filter, setFilter] = useState({});
+const useProducts = (): { products: Product[], page: number, setPage: React.Dispatch<React.SetStateAction<number>>, filter: Filter, setFilter: React.Dispatch<React.SetStateAction<Filter>> } => {
+	const [products, setProducts] = useState<Product[]>([]);
+	const [page, setPage] = useState<number>(1);
+	const [filter, setFilter] = useState<Filter>({});
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -47,7 +60,7 @@ const useProducts = () => {
 			if (filteredIds) {
 				const itemsResponse = await sendRequest('get_items', { ids: filteredIds });
 				if (itemsResponse) {
-					const uniqueProducts = {};
+					const uniqueProducts: { [key: string]: Product } = {};
 					itemsResponse.forEach(item => {
 						if (!uniqueProducts[item.id]) {
 							uniqueProducts[item.id] = item;
@@ -64,7 +77,7 @@ const useProducts = () => {
 	return { products, page, setPage, filter, setFilter };
 };
 
-const ProductsTable = () => {
+const ProductsTable: React.FC = () => {
 	const { products, page, setPage, filter, setFilter } = useProducts();
 
 	return (
@@ -91,9 +104,9 @@ const ProductsTable = () => {
 			</table>
 			<button onClick={() => setPage(page - 1)} disabled={page === 1}>Предыдущая страница</button>
 			<button onClick={() => setPage(page + 1)}>Следующая страница</button>
-			<input type="text" placeholder="Фильтр по названию" onChange={(e) => setFilter({ ...filter, product: e.target.value || undefined })} />
-			<input type="text" placeholder="Фильтр по цене" onChange={(e) => setFilter({ ...filter, price: parseFloat(e.target.value) || undefined })} />
-			<input type="text" placeholder="Фильтр по бренду" onChange={(e) => setFilter({ ...filter, brand: e.target.value || undefined })} />
+			<input type="text" placeholder="Фильтр по названию" onChange={(e) => setFilter({ ...filter, product: e.target.value })} />
+			<input type="number" placeholder="Фильтр по цене" onChange={(e) => setFilter({ ...filter, price: parseFloat(e.target.value) })} />
+			<input type="text" placeholder="Фильтр по бренду" onChange={(e) => setFilter({ ...filter, brand: e.target.value })} />
 		</div>
 	);
 };

@@ -1,26 +1,29 @@
 import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { RootState } from '../store';
+import { useAppDispatch, useAppSelector } from '../store/index';
 import { setPage } from '../store/productsSlice';
 
 const Pagination: React.FC = () => {
-    const dispatch = useDispatch();
-    const page = useSelector((state: RootState) => state.products.page);
+	const dispatch = useAppDispatch();
+	const page = useAppSelector((state) => state.products.page);
 
-    const handlePrevPage = () => {
-        dispatch(setPage(page - 1));
-    };
+	const handlePrevPageClick = () => {
+		if (page > 1) {
+			dispatch(setPage(page - 1));
+		}
+	};
 
-    const handleNextPage = () => {
-        dispatch(setPage(page + 1));
-    };
+	const handleNextPageClick = () => {
+		dispatch(setPage(page + 1));
+	};
 
-    return (
-        <div>
-            <button onClick={handlePrevPage} disabled={page === 1}>Предыдущая страница</button>
-            <button onClick={handleNextPage}>Следующая страница</button>
-        </div>
-    );
+	return (
+		<div>
+			<button onClick={handlePrevPageClick} disabled={page === 1}>
+				Предыдущая страница
+			</button>
+			<button onClick={handleNextPageClick}>Следующая страница</button>
+		</div>
+	);
 };
 
 export default Pagination;
